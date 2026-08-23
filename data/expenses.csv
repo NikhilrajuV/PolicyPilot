@@ -1,0 +1,11 @@
+claim_id,employee,department,category,amount,description
+EXP001,Ravi,Sales,Travel,350,Client meeting travel
+EXP002,Anu,Sales,Hotel,800,Client accommodation
+EXP003,Kiran,Sales,Travel,2500,International client visit
+EXP004,John,HR,Office Supplies,300,Stationery purchase
+EXP005,Priya,Finance,Software,550,Analytics software subscription
+EXP006,Rahul,Sales,Equipment,4800,Laptop purchase
+EXP007,Sneha,HR,Training,1200,Employee training program
+EXP008,Arjun,IT,Software,2200,Cloud development tools
+EXP009,Meena,Sales,Travel,150,Local transportation
+EXP010,Vijay,Finance,Equipment,6000,Server equipment
