@@ -16,6 +16,11 @@ PolicyPilot supports a simple end-to-end workflow:
 
 **Write Policy → Parse Rules → Validate Policy → Evaluate Claims → Explain Decision → Audit**
 
+# 🎥 Suggested Demo Flow
+
+video drive link :-   https://drive.google.com/drive/folders/1c8lqly7Es80l0ZY5tdvP25QfUoy76CcS
+
+
 ### Core capabilities
 
 - 📝 **Plain-English policy configuration**
@@ -660,38 +665,7 @@ description
 
 ---
 
-# 🎥 Suggested Demo Flow
 
-For a short assessment demo:
-
-### 00:00 – 00:30
-Introduce PolicyPilot and the problem.
-
-### 00:30 – 01:15
-Show the plain-English policy.
-
-### 01:15 – 02:00
-Parse the policy and show structured rules.
-
-### 02:00 – 03:00
-Evaluate the sample claims.
-
-### 03:00 – 03:45
-Open a claim and show:
-
-```text
-Decision
-Applied Rule
-Reason
-```
-
-### 03:45 – 04:30
-Change a threshold and re-evaluate.
-
-### 04:30 – 05:00
-Show validation, rule priority, boundary handling, and audit traceability.
-
----
 
 # 📌 Assessment Alignment
 
