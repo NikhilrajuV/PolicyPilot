@@ -641,10 +641,7 @@ def navigate(page):
 # ============================================================
 # DATA
 # ============================================================
-if st.session_state.uploaded_data is not None:
-    expenses = pd.read_csv(st.session_state.uploaded_data)
-else:
-    expenses = pd.read_csv(Path("data") / "expenses.csv")
+DEFAULT_DATA_PATH = Path("data") / "expenses.csv"
 
 required_columns = {
     "claim_id",
@@ -654,6 +651,70 @@ required_columns = {
     "amount",
     "description",
 }
+
+
+def load_expenses():
+    """Load the uploaded CSV when it is valid, otherwise use demo data."""
+
+    uploaded_file = st.session_state.get("uploaded_data")
+
+    # No custom file selected: use the bundled demo data.
+    if uploaded_file is None:
+        try:
+            return pd.read_csv(DEFAULT_DATA_PATH)
+        except FileNotFoundError:
+            st.error(
+                "Default expense data was not found. "
+                "Please make sure data/expenses.csv exists."
+            )
+            st.stop()
+        except pd.errors.EmptyDataError:
+            st.error(
+                "The default expense CSV is empty. "
+                "Please restore data/expenses.csv."
+            )
+            st.stop()
+
+    try:
+        # Streamlit UploadedFile objects are file-like. Reset the cursor
+        # before reading so repeated Streamlit reruns work correctly.
+        uploaded_file.seek(0)
+
+        if getattr(uploaded_file, "size", 0) == 0:
+            st.session_state.uploaded_data = None
+            st.warning(
+                "The uploaded CSV is empty. "
+                "The default sample data is being used."
+            )
+            return pd.read_csv(DEFAULT_DATA_PATH)
+
+        data = pd.read_csv(uploaded_file)
+
+        if data.empty or len(data.columns) == 0:
+            st.session_state.uploaded_data = None
+            st.warning(
+                "The uploaded CSV contains no expense rows. "
+                "The default sample data is being used."
+            )
+            return pd.read_csv(DEFAULT_DATA_PATH)
+
+        return data
+
+    except pd.errors.EmptyDataError:
+        st.session_state.uploaded_data = None
+        st.warning(
+            "The uploaded CSV is empty. "
+            "The default sample data is being used."
+        )
+        return pd.read_csv(DEFAULT_DATA_PATH)
+
+    except Exception as exc:
+        st.session_state.uploaded_data = None
+        st.error(f"Could not read the uploaded CSV: {exc}")
+        st.stop()
+
+
+expenses = load_expenses()
 
 missing_columns = required_columns - set(expenses.columns)
 
@@ -726,7 +787,7 @@ with st.sidebar:
     elif warnings:
         st.warning("Valid with warnings")
     else:
-        st.success("Policy validated", icon="✓")
+        st.success("Policy validated")
 
     rules = st.session_state.rules
 
@@ -986,7 +1047,7 @@ elif st.session_state.page == "Policy":
             )
         else:
             st.session_state.results = None
-            st.success("Policy parsed and activated.", icon="✅")
+            st.success("Policy parsed and activated.")
 
         st.rerun()
 
@@ -1087,7 +1148,6 @@ elif st.session_state.page == "Policy":
         "For example, a rule written as 'below $500' does not claim that "
         "$500 itself is below the threshold. Confirm the wording you want "
         "before submission.",
-        icon="ℹ️",
     )
 
     with st.expander("View structured policy"):
@@ -1134,9 +1194,49 @@ elif st.session_state.page == "Claims":
             )
 
             if uploaded is not None:
-                st.session_state.uploaded_data = uploaded
-                expenses = pd.read_csv(uploaded)
-                st.session_state.results = None
+                if uploaded.size == 0:
+                    st.error(
+                        "The uploaded CSV is empty. "
+                        "Please choose a valid expense CSV."
+                    )
+                else:
+                    try:
+                        uploaded.seek(0)
+                        preview = pd.read_csv(uploaded)
+
+                        if preview.empty or len(preview.columns) == 0:
+                            st.error(
+                                "The uploaded CSV contains no expense rows. "
+                                "Please choose a valid CSV."
+                            )
+                        else:
+                            missing_upload_columns = (
+                                required_columns - set(preview.columns)
+                            )
+
+                            if missing_upload_columns:
+                                st.error(
+                                    "This CSV is missing required columns: "
+                                    + ", ".join(
+                                        sorted(missing_upload_columns)
+                                    )
+                                )
+                            else:
+                                st.session_state.uploaded_data = uploaded
+                                st.session_state.results = None
+                                expenses = preview
+
+                                st.success(
+                                    f"Loaded {len(preview)} expense claims."
+                                )
+
+                    except pd.errors.EmptyDataError:
+                        st.error(
+                            "The uploaded CSV is empty. "
+                            "Please choose a valid expense CSV."
+                        )
+                    except Exception as exc:
+                        st.error(f"Unable to read this CSV: {exc}")
 
         with action_col:
             st.write("")
@@ -1293,7 +1393,6 @@ elif st.session_state.page == "Audit Log":
     if st.session_state.results is None:
         st.info(
             "No evaluation has been run yet. Open Claims and evaluate a batch.",
-            icon="ℹ️",
         )
 
         if st.button("Go to Claims  →", type="primary"):
